@@ -1,14 +1,24 @@
 // ============================================================
-//  FINDME — sw.js   (Service Worker)
-//  Handles: PWA offline cache + FCM background push messages
-//
-//  !! IMPORTANT: Keep firebaseConfig in sync with js/config.js !!
+//  CRUSHCOMPASS — sw.js   (Service Worker)
 // ============================================================
 
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
 
-const CACHE_NAME = 'findme-v1';
+// !! Keep in sync with js/config.js !!
+const firebaseConfig = {
+  apiKey:            "AIzaSyCgp-uyjEwZYyWM3B7DTU-fT4bYqZkrkbw",
+  authDomain:        "crush-compass.firebaseapp.com",
+  projectId:         "crush-compass",
+  storageBucket:     "crush-compass.firebasestorage.app",
+  messagingSenderId: "585285811651",
+  appId:             "1:585285811651:web:1bea9529c3d7ad80559176",
+};
+
+firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging();
+
+const CACHE_NAME = 'crushcompass-v1';
 
 const STATIC_ASSETS = [
   '/CrushCompass/',
@@ -20,33 +30,17 @@ const STATIC_ASSETS = [
   '/CrushCompass/icons/icon-512.png',
 ];
 
-// !! Keep in sync with js/config.js !!
-const firebaseConfig = {
-  apiKey: "AIzaSyCgp-uyjEwZYyWM3B7DTU-fT4bYqZkrkbw",
-  authDomain: "crush-compass.firebaseapp.com",
-  databaseURL: "https://crush-compass-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "crush-compass",
-  storageBucket: "crush-compass.firebasestorage.app",
-  messagingSenderId: "585285811651",
-  appId: "1:585285811651:web:1bea9529c3d7ad80559176",
-  measurementId: "G-CB1MXJ8VLN"
-};
-
-firebase.initializeApp(firebaseConfig);
-const messaging = firebase.messaging();
-
-/* ── Install: cache static shell ─────────────────────────── */
+/* ── Install ─────────────────────────────────────────────── */
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      // Use addAll but don't fail if some assets are missing
       return Promise.allSettled(STATIC_ASSETS.map(url => cache.add(url)));
     })
   );
   self.skipWaiting();
 });
 
-/* ── Activate: clear old caches ──────────────────────────── */
+/* ── Activate ────────────────────────────────────────────── */
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -56,12 +50,10 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-/* ── Fetch: cache-first for static, network-first for API ── */
+/* ── Fetch ───────────────────────────────────────────────── */
 self.addEventListener('fetch', (event) => {
-  // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
-  // Skip Firebase / Google API calls — always network
   const url = new URL(event.request.url);
   if (url.hostname.includes('googleapis.com') ||
       url.hostname.includes('gstatic.com')    ||
@@ -85,25 +77,24 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-/* ── FCM: background message handler ────────────────────── */
+/* ── FCM background messages ─────────────────────────────── */
 messaging.onBackgroundMessage((payload) => {
-  console.log('[SW] Background message received:', payload);
+  console.log('[SW] Background message:', payload);
 
   const type  = payload.data?.type ?? '';
-  const title = payload.notification?.title ?? 'FindMe';
+  const title = payload.notification?.title ?? 'CrushCompass';
   const body  = payload.notification?.body  ?? '';
 
   const notifOptions = {
     body,
-    icon:    '/icons/icon-192.png',
-    badge:   '/icons/badge-96.png',
-    tag:     'findme-' + type,
+    icon:    '/CrushCompass/icons/icon-192.png',
+    badge:   '/CrushCompass/icons/badge-96.png',
+    tag:     'crushcompass-' + type,
     renotify: true,
     requireInteraction: type === 'location_request',
-    data:    { type, url: payload.fcmOptions?.link ?? '/' },
+    data:    { type, url: payload.fcmOptions?.link ?? '/CrushCompass/' },
   };
 
-  // Action buttons only for location request (Android supports these; iOS ignores them)
   if (type === 'location_request') {
     notifOptions.actions = [
       { action: 'accept',  title: '✅ Share Location' },
@@ -115,7 +106,7 @@ messaging.onBackgroundMessage((payload) => {
   return self.registration.showNotification(title, notifOptions);
 });
 
-/* ── Notification click handler ─────────────────────────── */
+/* ── Notification click ──────────────────────────────────── */
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const { type } = event.notification.data ?? {};
@@ -123,43 +114,32 @@ self.addEventListener('notificationclick', (event) => {
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (clientList) => {
-
-      // If user tapped Accept/Decline action (Android)
-      if (type === 'location_request') {
-        if (action === 'accept' || action === 'decline') {
-          // Try to tell an open client; if none, open app with param
-          const openClient = clientList.find(c => c.focused) ?? clientList[0];
-
-          if (openClient) {
-            openClient.postMessage({ type: action === 'accept' ? 'sw_accept' : 'sw_decline' });
-            return openClient.focus();
-          } else {
-            // Open app with action encoded in URL
-            return self.clients.openWindow(`/?action=${action}`);
-          }
+      if (type === 'location_request' && (action === 'accept' || action === 'decline')) {
+        const openClient = clientList.find(c => c.focused) ?? clientList[0];
+        if (openClient) {
+          openClient.postMessage({ type: action === 'accept' ? 'sw_accept' : 'sw_decline' });
+          return openClient.focus();
+        } else {
+          return self.clients.openWindow(`/CrushCompass/?action=${action}`);
         }
       }
 
-      // Default: just open / focus the app
-      if (clientList.length > 0) {
-        return clientList[0].focus();
-      }
-      return self.clients.openWindow('/');
+      if (clientList.length > 0) return clientList[0].focus();
+      return self.clients.openWindow('/CrushCompass/');
     })
   );
 });
 
-/* ── Push event (non-FCM fallback) ───────────────────────── */
+/* ── Push fallback ───────────────────────────────────────── */
 self.addEventListener('push', (event) => {
-  // FCM SDK handles push events; this is a fallback for raw pushes
   if (!event.data) return;
   try {
     const payload = event.data.json();
     if (!payload.notification) return;
     event.waitUntil(
       self.registration.showNotification(
-        payload.notification.title ?? 'FindMe',
-        { body: payload.notification.body ?? '', icon: '/icons/icon-192.png' }
+        payload.notification.title ?? 'CrushCompass',
+        { body: payload.notification.body ?? '', icon: '/CrushCompass/icons/icon-192.png' }
       )
     );
   } catch (e) {
