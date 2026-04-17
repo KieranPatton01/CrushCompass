@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#050a14" />
+
+  <!-- PWA / iOS -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="FindMe" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="manifest" href="manifest.json" />
+
+  <title>FindMe — Compass</title>
+
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/compass.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SCREEN 1: Identity selection (first launch only)
+  ════════════════════════════════════════════════════════ -->
+  <div id="screen-identity" class="screen">
+    <div class="screen-content">
+      <div class="app-logo">🧭</div>
+      <h1>FindMe</h1>
+      <p class="subtitle">Point the way to each other</p>
+
+      <p class="prompt">Who are you?</p>
+
+      <div class="identity-buttons">
+        <button class="btn btn-identity" id="btn-user1">
+          <span class="user-emoji" id="user1-emoji">🧭</span>
+          <span class="user-name"  id="user1-name">User 1</span>
+        </button>
+        <button class="btn btn-identity" id="btn-user2">
+          <span class="user-emoji" id="user2-emoji">💫</span>
+          <span class="user-name"  id="user2-name">User 2</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       SCREEN 2: Permission setup
+  ════════════════════════════════════════════════════════ -->
+  <div id="screen-permissions" class="screen">
+    <div class="screen-content">
+      <div class="permissions-icon">🔐</div>
+      <h2>Permissions needed</h2>
+      <p class="subtitle" style="text-align:center">FindMe needs these to work</p>
+
+      <div class="permission-list">
+        <div class="permission-item">
+          <span class="perm-icon">📍</span>
+          <div class="perm-text">
+            <strong>Location</strong>
+            <span>To share your position</span>
+          </div>
+          <span class="perm-status" id="perm-location-status">⏳</span>
+        </div>
+
+        <div class="permission-item">
+          <span class="perm-icon">🔔</span>
+          <div class="perm-text">
+            <strong>Notifications</strong>
+            <span>Receive location requests</span>
+          </div>
+          <span class="perm-status" id="perm-notification-status">⏳</span>
+        </div>
+
+        <div class="permission-item">
+          <span class="perm-icon">🧭</span>
+          <div class="perm-text">
+            <strong>Motion &amp; Orientation</strong>
+            <span>Compass direction</span>
+          </div>
+          <span class="perm-status" id="perm-orientation-status">⏳</span>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="btn-grant-permissions">
+        Grant All Permissions
+      </button>
+      <p class="permission-note">Accept all prompts that appear</p>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       SCREEN 3: Main compass + action area
+  ════════════════════════════════════════════════════════ -->
+  <div id="screen-main" class="screen">
+
+    <!-- Top status bar -->
+    <div class="status-bar">
+      <span class="user-label"    id="my-identity">Me</span>
+      <span class="connection-status offline" id="connection-status"></span>
+      <span class="partner-label" id="partner-identity">Partner</span>
+    </div>
+
+    <div class="main-content">
+
+      <!-- ── Compass instrument ─────────────────────────── -->
+      <div class="compass-wrapper" id="compass-wrapper">
+        <div class="compass-container" id="compass-container">
+          <div class="compass-dial">
+
+            <!-- Rotating face (keeps N up) -->
+            <div id="compass-face-container">
+              <svg viewBox="0 0 300 300"
+                   class="compass-face"
+                   id="compass-face"
+                   xmlns="http://www.w3.org/2000/svg">
+                <!-- Built by compass.js -->
+              </svg>
+            </div>
+
+            <!-- Rotating needle (points to partner) -->
+            <div id="needle-wrapper">
+              <div class="needle">
+                <div class="needle-tip"></div>
+                <div class="needle-tail"></div>
+              </div>
+            </div>
+
+            <!-- Centre pivot -->
+            <div class="compass-center"></div>
+          </div>
+        </div>
+
+        <!-- Overlay shown when session is inactive -->
+        <div class="compass-overlay" id="compass-overlay">
+          <div class="overlay-icon">📡</div>
+          <p id="compass-overlay-text">Press Find to share location</p>
+        </div>
+
+        <!-- Accuracy ring -->
+        <div class="accuracy-ring" id="accuracy-ring"></div>
+      </div>
+
+      <!-- ── Data readouts ──────────────────────────────── -->
+      <div class="info-panel">
+        <div class="info-row">
+          <div class="info-item">
+            <span class="info-label">Distance</span>
+            <span class="info-value" id="distance-display">--</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Last Updated</span>
+            <span class="info-value" id="last-updated">--</span>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-item">
+            <span class="info-label">Your GPS ±</span>
+            <span class="info-value" id="my-accuracy">--</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Bearing</span>
+            <span class="info-value" id="bearing-display">-- °</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Action area ────────────────────────────────── -->
+      <div class="action-area">
+
+        <!-- State: idle -->
+        <div id="action-idle">
+          <button class="btn btn-find" id="btn-find">
+            <span class="btn-icon">📡</span>
+            Find <span id="partner-name-find">Partner</span>
+          </button>
+        </div>
+
+        <!-- State: waiting for partner to respond -->
+        <div id="action-requesting" class="hidden">
+          <div class="request-status">
+            <div class="spinner"></div>
+            <p>Waiting for <span id="partner-name-requesting">Partner</span>…</p>
+            <small>Expires in <span id="request-countdown">2:00</span></small>
+          </div>
+          <button class="btn btn-secondary" id="btn-cancel-request">Cancel</button>
+        </div>
+
+        <!-- State: partner wants to find me -->
+        <div id="action-incoming" class="hidden">
+          <div class="incoming-request">
+            <div class="pulse-ring"></div>
+            <p><strong id="requester-name">Partner</strong> wants to find you!</p>
+          </div>
+          <div class="response-buttons">
+            <button class="btn btn-accept"  id="btn-accept">✅ Share Location</button>
+            <button class="btn btn-decline" id="btn-decline">❌ Not Now</button>
+          </div>
+        </div>
+
+        <!-- State: actively sharing -->
+        <div id="action-active" class="hidden">
+          <div class="sharing-status">
+            <span class="status-dot"></span>
+            Sharing live location
+          </div>
+          <button class="btn btn-secondary btn-stop" id="btn-stop">Stop Sharing</button>
+        </div>
+
+      </div><!-- /action-area -->
+    </div><!-- /main-content -->
+  </div><!-- /screen-main -->
+
+
+  <!-- Global toast container -->
+  <div id="toast-container" aria-live="polite"></div>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       Scripts — ES modules, deferred naturally by type=module
+  ════════════════════════════════════════════════════════ -->
+  <script type="module" src="js/app.js"></script>
+
+  <!-- Handle SW-triggered URL params (accept/decline from notification) -->
+  <script>
+    (() => {
+      const params = new URLSearchParams(location.search);
+      const action = params.get('action');
+      if (action === 'accept' || action === 'decline') {
+        // Clean URL, let app.js handle on load
+        history.replaceState({}, '', location.pathname);
+        window.__pendingSwAction = action;
+      }
+    })();
+  </script>
+
+</body>
+</html>

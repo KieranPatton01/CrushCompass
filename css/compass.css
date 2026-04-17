@@ -1,0 +1,187 @@
+/* ============================================================
+   FINDME — compass.css
+   Compass instrument styles
+   ============================================================ */
+
+/* ── Wrapper ─────────────────────────────────────────────── */
+.compass-wrapper {
+  position: relative;
+  width: min(74vw, 320px);
+  aspect-ratio: 1;
+  flex-shrink: 0;
+}
+
+/* ── Outer bezel ring ────────────────────────────────────── */
+.compass-container {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  padding: 6px;
+  background: conic-gradient(
+    from 0deg,
+    #1e3a52 0deg, #2a5070 60deg, #1e3a52 120deg,
+    #2a5070 180deg, #1e3a52 240deg, #2a5070 300deg, #1e3a52 360deg
+  );
+  box-shadow:
+    0 0 0 1px #0d1e30,
+    0 0 40px rgba(13, 148, 136, .12),
+    0 8px 40px rgba(0,0,0,.6),
+    inset 0 1px 0 rgba(255,255,255,.06);
+  position: relative;
+}
+
+/* ── Dial (inner face area) ──────────────────────────────── */
+.compass-dial {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative;
+  background: #090d18;
+  box-shadow: inset 0 2px 12px rgba(0,0,0,.8);
+}
+
+/* ── Face: the part that rotates to keep N up ────────────── */
+#compass-face-container {
+  position: absolute;
+  inset: 0;
+  transition: transform .1s linear;
+  will-change: transform;
+}
+
+.compass-face {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ── Needle wrapper: rotates to point toward partner ─────── */
+#needle-wrapper {
+  position: absolute;
+  inset: 0;
+  transition: transform .3s cubic-bezier(.25,.46,.45,.94);
+  will-change: transform;
+}
+
+/* ── Needle shape ────────────────────────────────────────── */
+.needle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 10px;
+  height: min(46vw, 200px); /* scales with compass size */
+}
+
+/* North tip (partner direction) — amber glow */
+.needle-tip {
+  flex: 0 0 55%;
+  width: 100%;
+  background: linear-gradient(to top, #92600a, #f59e0b, #fde68a);
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+  filter: drop-shadow(0 -4px 12px rgba(245,158,11,.6));
+}
+
+/* South tail — muted slate */
+.needle-tail {
+  flex: 0 0 45%;
+  width: 100%;
+  background: linear-gradient(to bottom, #334155, #1e293b);
+  clip-path: polygon(0% 0%, 100% 0%, 50% 100%);
+  opacity: .7;
+}
+
+/* ── Centre pivot dot ────────────────────────────────────── */
+.compass-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #4ade80, #14532d);
+  box-shadow: 0 0 10px rgba(74,222,128,.5);
+  z-index: 10;
+}
+
+/* Active state: pulsing center */
+.session-active .compass-center {
+  animation: center-pulse 2s ease-in-out infinite;
+}
+@keyframes center-pulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(74,222,128,.4); }
+  50%       { box-shadow: 0 0 16px rgba(74,222,128,.8); }
+}
+
+/* ── Compass overlay (idle state message) ────────────────── */
+.compass-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(5, 10, 20, .72);
+  backdrop-filter: blur(2px);
+  z-index: 20;
+  transition: opacity .4s ease;
+}
+.compass-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+.overlay-icon {
+  font-size: 2rem;
+  opacity: .6;
+}
+#compass-overlay-text {
+  font-size: .78rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  text-align: center;
+  padding: 0 24px;
+}
+
+/* ── Active state: remove overlay + glow ring ────────────── */
+.session-active .compass-container {
+  box-shadow:
+    0 0 0 1px #0d2e3e,
+    0 0 50px rgba(13,148,136,.25),
+    0 8px 40px rgba(0,0,0,.6),
+    inset 0 1px 0 rgba(255,255,255,.06);
+  animation: active-ring 3s ease-in-out infinite;
+}
+@keyframes active-ring {
+  0%, 100% { box-shadow: 0 0 0 1px #0d2e3e, 0 0 40px rgba(13,148,136,.2), 0 8px 40px rgba(0,0,0,.6); }
+  50%       { box-shadow: 0 0 0 1px #0d4a5e, 0 0 60px rgba(13,148,136,.4), 0 8px 40px rgba(0,0,0,.6); }
+}
+
+/* ── Needle glow (only while active) ────────────────────── */
+.session-active .needle-tip {
+  filter: drop-shadow(0 -6px 16px rgba(245,158,11,.8));
+}
+
+/* ── Accuracy ring (rendered as a thin arc overlay) ─────── */
+.accuracy-ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .4s;
+}
+.accuracy-ring.poor {
+  opacity: 1;
+  border: 1.5px dashed rgba(234,179,8,.3);
+}
+.accuracy-ring.good {
+  opacity: 1;
+  border: 1.5px solid rgba(34,197,94,.25);
+}
