@@ -21,7 +21,7 @@ const STATIC_ASSETS = [
 ];
 
 // !! Keep in sync with js/config.js !!
-const firebase = {
+const firebaseConfig = {
   apiKey: "AIzaSyCgp-uyjEwZYyWM3B7DTU-fT4bYqZkrkbw",
   authDomain: "crush-compass.firebaseapp.com",
   databaseURL: "https://crush-compass-default-rtdb.europe-west1.firebasedatabase.app",
