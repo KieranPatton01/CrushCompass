@@ -11,13 +11,13 @@ importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-com
 const CACHE_NAME = 'findme-v1';
 
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/css/style.css',
-  '/css/compass.css',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
+  '/CrushCompass/',
+  '/CrushCompass/index.html',
+  '/CrushCompass/manifest.json',
+  '/CrushCompass/css/style.css',
+  '/CrushCompass/css/compass.css',
+  '/CrushCompass/icons/icon-192.png',
+  '/CrushCompass/icons/icon-512.png',
 ];
 
 // !! Keep in sync with js/config.js !!

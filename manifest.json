@@ -1,27 +1,28 @@
 {
-  "name": "FindMe — Compass",
-  "short_name": "FindMe",
+  "name": "CrushCompass",
+  "short_name": "CrushCompass",
   "description": "Point the way to each other",
-  "start_url": "/",
+  "start_url": "/CrushCompass/",
+  "scope": "/CrushCompass/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#050a14",
   "theme_color": "#050a14",
   "icons": [
     {
-      "src": "icons/icon-192.png",
+      "src": "/CrushCompass/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "icons/icon-512.png",
+      "src": "/CrushCompass/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "icons/apple-touch-icon.png",
+      "src": "/CrushCompass/icons/apple-touch-icon.png",
       "sizes": "180x180",
       "type": "image/png"
     }

@@ -31,7 +31,7 @@ async function boot() {
   // 1. Register service worker
   if ('serviceWorker' in navigator) {
     try {
-      swReg = await navigator.serviceWorker.register('/sw.js');
+      swReg = await navigator.serviceWorker.register('/CrushCompass/sw.js', { scope: '/CrushCompass/' });
       console.log('[SW] Registered, scope:', swReg.scope);
     } catch (e) {
       console.warn('[SW] Registration failed:', e);

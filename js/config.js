@@ -10,7 +10,7 @@ export const CONFIG = {
   // Get from: Firebase Console → Project Settings → General → Your apps
   // -----------------------------------------------------------
   firebase: {
-    apiKey: "AIzaSyCgp-uyjEwZYyWM3B7DTU-fT4bYqZkrkbw",
+  apiKey: "AIzaSyCgp-uyjEwZYyWM3B7DTU-fT4bYqZkrkbw",
     authDomain: "crush-compass.firebaseapp.com",
     databaseURL: "https://crush-compass-default-rtdb.europe-west1.firebasedatabase.app",
     projectId: "crush-compass",
