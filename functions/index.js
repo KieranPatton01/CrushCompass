@@ -1,7 +1,5 @@
 // ============================================================
-//  FINDME — functions/index.js
-//  Firebase Cloud Functions
-//  Deploy with: firebase deploy --only functions
+//  CRUSHCOMPASS — functions/index.js
 // ============================================================
 
 const { onDocumentWritten } = require('firebase-functions/v2/firestore');
@@ -13,93 +11,70 @@ initializeApp();
 const db        = getFirestore();
 const messaging = getMessaging();
 
-// !! Keep in sync with js/config.js !!
 const USER_NAMES = {
-  user1: 'kieran',    // Replace with real name
-  user2: 'Isla',  // Replace with real name
+  user1: 'Kieran',
+  user2: 'Jamie',
 };
-
-// Your GitHub Pages URL — used as notification click target
 const APP_URL = 'https://kieranpatton01.github.io/CrushCompass';
 
 /* ── Trigger: session document write ────────────────────── */
-exports.onSessionWrite = onDocumentWritten('sessions/main', async (event) => {
-  const before = event.data?.before?.data?.() ?? {};
-  const after  = event.data?.after?.data?.()  ?? {};
+exports.onSessionWrite = onDocumentWritten(
+  { document: 'sessions/main', region: 'europe-west1' },
+  async (event) => {
+    const before = event.data?.before?.data?.() ?? {};
+    const after  = event.data?.after?.data?.()  ?? {};
 
-  const prevStatus = before.status ?? 'idle';
-  const newStatus  = after.status  ?? 'idle';
+    const prevStatus = before.status ?? 'idle';
+    const newStatus  = after.status  ?? 'idle';
 
-  if (prevStatus === newStatus) return null;  // No status change
+    if (prevStatus === newStatus) return null;
 
-  console.log(`[Session] ${prevStatus} → ${newStatus} (requestedBy: ${after.requestedBy})`);
+    console.log(`[Session] ${prevStatus} → ${newStatus}`);
 
-  switch (newStatus) {
-
-    case 'requesting': {
-      // Notify the OTHER user that their partner wants to find them
-      const target    = after.requestedBy === 'user1' ? 'user2' : 'user1';
-      const requester = USER_NAMES[after.requestedBy] ?? 'Your partner';
-      await sendPush(target, {
-        title: '📍 Location Request',
-        body:  `${requester} wants to find you!`,
-        type:  'location_request',
-      });
-      break;
+    switch (newStatus) {
+      case 'requesting': {
+        const target    = after.requestedBy === 'user1' ? 'user2' : 'user1';
+        const requester = USER_NAMES[after.requestedBy] ?? 'Your partner';
+        await sendPush(target, {
+          title: '📍 Location Request',
+          body:  `${requester} wants to find you!`,
+          type:  'location_request',
+        });
+        break;
+      }
+      case 'active': {
+        const requester = after.requestedBy;
+        if (!requester) break;
+        const accepter = requester === 'user1' ? 'user2' : 'user1';
+        await sendPush(requester, {
+          title: '✅ Location Accepted',
+          body:  `${USER_NAMES[accepter] ?? 'Your partner'} is sharing their location`,
+          type:  'location_accepted',
+        });
+        break;
+      }
+      case 'declined': {
+        const requester = after.requestedBy;
+        if (!requester) break;
+        await sendPush(requester, {
+          title: '❌ Request Declined',
+          body:  'You Are Getting Cheated On Lil Bro',
+          type:  'location_declined',
+        });
+        break;
+      }
     }
-
-    case 'active': {
-      // Notify the requester that their partner accepted
-      const requester = after.requestedBy;
-      if (!requester) break;
-      const accepter = requester === 'user1' ? 'user2' : 'user1';
-      await sendPush(requester, {
-        title: '✅ Location Accepted',
-        body:  `${USER_NAMES[accepter] ?? 'Your partner'} is sharing their location`,
-        type:  'location_accepted',
-      });
-      break;
-    }
-
-    case 'declined': {
-      // Notify the requester of the decline
-      const requester = after.requestedBy;
-      if (!requester) break;
-      await sendPush(requester, {
-        title: '❌ Request Declined',
-        body:  'Not available right now',
-        type:  'location_declined',
-      });
-      break;
-    }
-
-    default:
-      break;
+    return null;
   }
+);
 
-  return null;
-});
-
-/* ── Helper: look up FCM token + send ────────────────────── */
+/* ── Send push notification ──────────────────────────────── */
 async function sendPush(userId, { title, body, type }) {
-  let fcmToken;
+  const snap = await db.doc(`users/${userId}`).get();
+  if (!snap.exists) return console.warn(`[Push] No user doc for ${userId}`);
 
-  try {
-    const snap = await db.doc(`users/${userId}`).get();
-    if (!snap.exists) {
-      console.warn(`[Push] No user doc for ${userId}`);
-      return;
-    }
-    fcmToken = snap.data().fcmToken;
-  } catch (e) {
-    console.error('[Push] Failed to read user doc:', e);
-    return;
-  }
-
-  if (!fcmToken) {
-    console.warn(`[Push] No FCM token for ${userId}`);
-    return;
-  }
+  const fcmToken = snap.data().fcmToken;
+  if (!fcmToken) return console.warn(`[Push] No token for ${userId}`);
 
   const message = {
     token: fcmToken,
@@ -107,50 +82,36 @@ async function sendPush(userId, { title, body, type }) {
     data: { type },
     webpush: {
       notification: {
-        icon:              `${APP_URL}/icons/icon-192.png`,
-        badge:             `${APP_URL}/icons/badge-96.png`,
+        icon:  `${APP_URL}/icons/icon-192.png`,
+        badge: `${APP_URL}/icons/badge-96.png`,
         requireInteraction: type === 'location_request',
-        vibrate:            type === 'location_request' ? [200, 100, 200] : undefined,
+        vibrate: type === 'location_request' ? [200, 100, 200] : undefined,
         actions: type === 'location_request' ? [
           { action: 'accept',  title: '✅ Share Location' },
-          { action: 'decline', title: '❌ Not Now'        },
+          { action: 'decline', title: '❌ I'm Cheating'        },
         ] : undefined,
       },
-      fcmOptions: {
-        link: APP_URL,
-      },
+      fcmOptions: { link: APP_URL },
     },
     android: {
       priority: 'high',
-      notification: {
-        channelId: 'findme_requests',
-        priority: 'max',
-        defaultVibrateTimings: true,
-      },
+      notification: { channelId: 'findme_requests', priority: 'max' },
     },
     apns: {
       payload: {
-        aps: {
-          alert: { title, body },
-          sound: 'default',
-          badge: 1,
-          'content-available': 1,
-        },
+        aps: { alert: { title, body }, sound: 'default', badge: 1 },
       },
     },
   };
 
   try {
-    const response = await messaging.send(message);
-    console.log(`[Push] Sent to ${userId}:`, response);
+    await messaging.send(message);
+    console.log(`[Push] Sent to ${userId}`);
   } catch (e) {
-    console.error(`[Push] Send failed for ${userId}:`, e.message);
-
-    // If token is invalid, clear it from Firestore
+    console.error(`[Push] Failed for ${userId}:`, e.message);
     if (e.code === 'messaging/registration-token-not-registered' ||
         e.code === 'messaging/invalid-registration-token') {
       await db.doc(`users/${userId}`).update({ fcmToken: null });
-      console.log(`[Push] Cleared invalid token for ${userId}`);
     }
   }
 }
