@@ -99,10 +99,12 @@ export function distanceMetres(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-/* ── Format distance for display ────────────────────────── */
+/* ── Format distance for display (metric / UK) ───────────── */
 export function formatDistance(metres) {
-  if (metres < 1000) return `${Math.round(metres)} m`;
-  return `${(metres / 1000).toFixed(1)} km`;
+  if      (metres <   10) return `${Math.round(metres)} m`;
+  else if (metres <  100) return `${Math.round(metres / 5)  * 5} m`;
+  else if (metres < 1000) return `${Math.round(metres / 10) * 10} m`;
+  else                    return `${(metres / 1000).toFixed(1)} km`;
 }
 
 /* ── Bearing from point A → point B (degrees, 0 = north) ── */
