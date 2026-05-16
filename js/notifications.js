@@ -2,7 +2,6 @@
 //  FINDME — notifications.js
 //  Firebase Cloud Messaging token management + permissions
 // ============================================================
-
 import { getMessaging, getToken, onMessage } from
   'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js';
 
@@ -26,20 +25,22 @@ export async function initNotifications(firebaseApp, vapidKey, swRegistration, o
 /* ── Request notification permission + get FCM token ─────── */
 export async function requestNotificationPermission(vapidKey, swRegistration) {
   const permission = await Notification.requestPermission();
-
   if (permission !== 'granted') {
     throw new Error(`Notification permission ${permission}`);
   }
 
   if (!_messaging) throw new Error('Messaging not initialised');
 
+  // Wait for the SW to be fully active before subscribing —
+  // without this, getToken fails with "no active Service Worker"
+  const readyRegistration = await navigator.serviceWorker.ready;
+
   const token = await getToken(_messaging, {
     vapidKey,
-    serviceWorkerRegistration: swRegistration,
+    serviceWorkerRegistration: readyRegistration,
   });
 
   if (!token) throw new Error('Failed to get FCM token');
-
   console.log('[FCM] Token obtained:', token.slice(0, 20) + '...');
   return token;
 }
