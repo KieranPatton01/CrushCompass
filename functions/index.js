@@ -88,7 +88,7 @@ async function sendPush(userId, { title, body, type }) {
         vibrate: type === 'location_request' ? [200, 100, 200] : undefined,
         actions: type === 'location_request' ? [
           { action: 'accept',  title: '✅ Share Location' },
-          { action: 'decline', title: '❌ I'm Cheating'        },
+          { action: 'decline', title: "❌ I'm Cheating"        },
         ] : undefined,
       },
       fcmOptions: { link: APP_URL },
