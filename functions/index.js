@@ -13,7 +13,7 @@ const messaging = getMessaging();
 
 const USER_NAMES = {
   user1: 'Kieran',
-  user2: 'Jamie',
+  user2: 'Isla',
 };
 const APP_URL = 'https://kieranpatton01.github.io/CrushCompass';
 
