@@ -6,7 +6,7 @@
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
 
-const CACHE_NAME = 'findme-v2';
+const CACHE_NAME = 'findme-v3';
 
 const STATIC_ASSETS = [
   '/CrushCompass/',
@@ -53,7 +53,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-/* ── Fetch: cache-first for static, network-first for API ── */
+/* ── Fetch: network-first, fallback to cache ─────────────── */
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
@@ -65,18 +65,15 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      const fetchPromise = fetch(event.request)
-        .then(response => {
-          if (response.ok) {
-            caches.open(CACHE_NAME).then(c => c.put(event.request, response.clone()));
-          }
-          return response;
-        })
-        .catch(() => cached);
-
-      return cached || fetchPromise;
-    })
+    fetch(event.request)
+      .then(response => {
+        if (response.ok) {
+          const resClone = response.clone();
+          caches.open(CACHE_NAME).then(c => c.put(event.request, resClone));
+        }
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
 

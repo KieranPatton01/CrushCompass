@@ -81,6 +81,9 @@ async function sendPush(userId, { title, body, type }) {
     notification: { title, body },
     data: { type },
     webpush: {
+      headers: {
+        Urgency: 'high'
+      },
       notification: {
         icon:  `${APP_URL}/icons/icon-192.png`,
         badge: `${APP_URL}/icons/badge-96.png`,
